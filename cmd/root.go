@@ -26,6 +26,7 @@ var (
 var rate int
 var month int
 var year int
+var eventPrefix string
 
 var calSvc *calendar.Service
 
@@ -61,7 +62,7 @@ and calcualte the monthly due for those walks.`,
 		beginningOfMonth := now.With(t).BeginningOfMonth()
 		endOfMonth := now.With(t).EndOfMonth()
 
-		events, err := calSvc.Events.List("primary").Q(`[DOG WALK]`).SingleEvents(true).ShowDeleted(false).TimeMin(beginningOfMonth.Format(time.RFC3339)).TimeMax(endOfMonth.Format(time.RFC3339)).Do()
+		events, err := calSvc.Events.List("primary").Q(eventPrefix).SingleEvents(true).ShowDeleted(false).TimeMin(beginningOfMonth.Format(time.RFC3339)).TimeMax(endOfMonth.Format(time.RFC3339)).Do()
 		if err != nil {
 			osExitErr(fmt.Sprintf("Unable to retrieve list of events from calendar: '%s'", err))
 		}
@@ -92,4 +93,5 @@ func init() {
 	rootCmd.PersistentFlags().IntVarP(&rate, "rate", "r", 34, "Rate for the dog walking to apply to the event count.")
 	rootCmd.PersistentFlags().IntVarP(&year, "year", "y", time.Now().Year(), "Year to pull the calendar month from.")
 	rootCmd.PersistentFlags().IntVarP(&month, "month", "m", int(time.Now().Month()), "Month to pull the calendar events from.")
+	rootCmd.PersistentFlags().StringVar(&eventPrefix, "prefix", `[DOG WALK]`, "Prefix of the events to pull from the calendar for counting.")
 }

@@ -1,4 +1,5 @@
 config/
 setup*.sh
 jonathan-walks
-dog-walks-api
+dog-walks
+vendor/

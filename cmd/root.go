@@ -62,7 +62,16 @@ and calcualte the monthly due for those walks.`,
 		beginningOfMonth := now.With(t).BeginningOfMonth()
 		endOfMonth := now.With(t).EndOfMonth()
 
-		events, err := calSvc.Events.List("primary").Q(eventPrefix).SingleEvents(true).ShowDeleted(false).TimeMin(beginningOfMonth.Format(time.RFC3339)).TimeMax(endOfMonth.Format(time.RFC3339)).Do()
+		events, err := calSvc.Events.
+			List("primary").
+			Q(eventPrefix).
+			SingleEvents(true).
+			ShowDeleted(false).
+			TimeMin(beginningOfMonth.Format(time.RFC3339)).
+			TimeMax(endOfMonth.Format(time.RFC3339)).
+			MaxResults(2500).
+			TimeZone(time.Now().Location().String()).
+			Do()
 		if err != nil {
 			osExitErr(fmt.Sprintf("Unable to retrieve list of events from calendar: '%s'", err))
 		}

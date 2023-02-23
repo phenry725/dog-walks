@@ -6,7 +6,7 @@ import (
 )
 
 func osExitErr(errMessage string) {
-	fmt.Fprint(os.Stderr, errMessage)
+	fmt.Fprintln(os.Stderr, errMessage)
 	os.Exit(1)
 }
 

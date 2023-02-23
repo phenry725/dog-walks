@@ -10,8 +10,6 @@ func osExitErr(errMessage string) {
 	os.Exit(1)
 }
 
-func Execute() {
-	if err := rootCmd.Execute(); err != nil {
-		osExitErr(fmt.Sprintf("Whoops. There was an error while executing your CLI '%s'", err))
-	}
+func Execute() error {
+	return rootCmd.Execute()
 }

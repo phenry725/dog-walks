@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"sort"
 	"strconv"
 	"time"
 
@@ -86,6 +87,56 @@ and calcualte the monthly due for those walks.`,
 	},
 }
 
+var detailsCmd = &cobra.Command{
+	Use:   "details",
+	Short: "Print the day by day details of the walk count.",
+	Long:  `Usually the dog walker reports the days walked, this is used for comparison against those counts.`,
+	Run: func(cmd *cobra.Command, args []string) {
+		table := tablewriter.NewWriter(os.Stdout)
+		table.SetHeader([]string{"Month", "Date", "Count", "Amount"})
+		table.SetBorder(false)
+		table.SetCenterSeparator("|")
+
+		t := time.Date(year, time.Month(month), time.Now().Day(), time.Now().Hour(), time.Now().Minute(), 0, 0, time.Now().Location())
+
+		beginningOfMonth := now.With(t).BeginningOfMonth()
+		endOfMonth := now.With(t).EndOfMonth()
+
+		events, err := calSvc.Events.
+			List("primary").
+			Q(eventPrefix).
+			SingleEvents(true).
+			ShowDeleted(false).
+			TimeMin(beginningOfMonth.Format(time.RFC3339)).
+			TimeMax(endOfMonth.Format(time.RFC3339)).
+			MaxResults(2500).
+			TimeZone(time.Now().Location().String()).
+			Do()
+		if err != nil {
+			osExitErr(fmt.Sprintf("Unable to retrieve list of events from calendar: '%s'", err))
+		}
+
+		eventDates := []time.Time{}
+		for _, event := range events.Items {
+			endWalkTime, err := time.Parse("2006-01-02T15:04:05Z", event.End.DateTime)
+			if err != nil {
+				log.Printf("error parsing time for end time: %v", err)
+			}
+			eventDates = append(eventDates, endWalkTime)
+		}
+
+		sort.Slice(eventDates, func(i, j int) bool {
+			return eventDates[i].Before(eventDates[j])
+		})
+
+		for _, eventDate := range eventDates {
+			table.Append([]string{eventDate.Month().String(), strconv.Itoa(eventDate.Day()), "1", strconv.Itoa(rate)})
+		}
+		table.SetFooter([]string{"", "", "Total", strconv.Itoa(len(events.Items) * rate)})
+		table.Render()
+	},
+}
+
 func init() {
 	var set bool
 
@@ -99,6 +150,9 @@ func init() {
 	if !set {
 		log.Fatal("Unable to load environment value for: GOOGLE_TOKEN_PATH")
 	}
+
+	rootCmd.AddCommand(detailsCmd)
+
 	rootCmd.PersistentFlags().IntVarP(&rate, "rate", "r", 34, "Rate for the dog walking to apply to the event count.")
 	rootCmd.PersistentFlags().IntVarP(&year, "year", "y", time.Now().Year(), "Year to pull the calendar month from.")
 	rootCmd.PersistentFlags().IntVarP(&month, "month", "m", int(time.Now().Month()), "Month to pull the calendar events from.")

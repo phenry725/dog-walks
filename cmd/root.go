@@ -95,6 +95,7 @@ var detailsCmd = &cobra.Command{
 		table := tablewriter.NewWriter(os.Stdout)
 		table.SetHeader([]string{"Month", "Date", "Count", "Amount"})
 		table.SetBorder(false)
+		table.SetAutoMergeCellsByColumnIndex([]int{0})
 		table.SetCenterSeparator("|")
 
 		t := time.Date(year, time.Month(month), time.Now().Day(), time.Now().Hour(), time.Now().Minute(), 0, 0, time.Now().Location())
